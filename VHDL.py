@@ -36,12 +36,7 @@ fan_speed = 0
 FAN_SPEED_MAX = 100
 FAN_SPEED_MIN = 0
 
-'''
-    Senzor temperature
-    Koriscenje: 
-        1) pozvati sensor = setup_sensor()
-        2) pozvati temperatura = read_temperature(sensor)
-'''
+
 def setup_sensor():
     os.system('modprobe w1-gpio')
     os.system('modprobe w1-therm')
@@ -74,14 +69,11 @@ def read_temperature(device_file):
 
 
 '''
-    LED
-    Ukljuci LED: turn_on_led(LED_koji_se_ukljucuje)
-    Ugasi LED: turn_off_led(LED_koji_se_gasi)
-    LED1 je na Pinu 17 ukoliko je dobro povezano
-    LED2 je na Pinu 27 ukoliko je dobro povezano
-    LED3 je na Pinu 22 ukoliko je dobro povezano
+    LED1 is Pin 17 
+    LED2 is Pin 27 
+    LED3 is Pin 22 
     
-    Pinovi u programu se razlikuju po oznaci od onih na raspberry plocici
+	Pins in the program have different markings than ones on the board
 '''
 def turn_on_led(pin):
     GPIO.setmode(GPIO.BCM)
@@ -117,7 +109,10 @@ def PID(temp_setpoint, temp_read):
 		fan_speed = 0
 	return None
 
-'''ECO PID koriscen prilikom rezima stednje energije
+'''
+
+We use ECO PID for energy saving mode
+
 '''
 def ECO_PID(temp_setpoint, temp_read):
 	global fan_speed
@@ -215,37 +210,19 @@ def state_logic(device_file):
 				match speed:
 					case '1':
 						fan_speed = 40
-						turn_on_led(PIN1)
-						turn_off_led(PIN2)
-						turn_off_led(PIN3)
 					case '2':
 						fan_speed = 70
-						turn_off_led(PIN1)
-						turn_on_led(PIN2)
-						turn_off_led(PIN3)
 					case '3':
 						fan_speed = 100
-						turn_off_led(PIN1)
-						turn_off_led(PIN2)
-						turn_on_led(PIN3)
 				STATE = '7'
 			case '2':
 					temperature = read_temperature(device_file)
 					if(temperature >= 20 and temperature <= 24):
 						fan_speed = 40
-						turn_on_led(PIN1)
-						turn_off_led(PIN2)
-						turn_off_led(PIN3)
 					elif(temperature >= 17 and temperature <= 27):
 						fan_speed = 70
-						turn_off_led(PIN1)
-						turn_on_led(PIN2)
-						turn_off_led(PIN3)
 					else:
 						fan_speed = 100
-						turn_off_led(PIN1)
-						turn_off_led(PIN2)
-						turn_on_led(PIN3)
 					STATE = '7'
 				
 			case '3':
@@ -261,9 +238,7 @@ def state_logic(device_file):
 			case '5':
 				fan_speed = 0
 				integral_sum = 0
-				turn_off_led(PIN1)
-				turn_off_led(PIN2)
-				turn_off_led(PIN3)
+				print("WARNING!!! WINDOW OPEN!!! WARNING!!!")
 			case '6':
 				ECO_PID(26, read_temperature(device_file))
 				STATE = '7'
@@ -285,14 +260,16 @@ def output_logic(device_file):
 			clear = lambda: os.system('clear')
 			#clear()
 			print('\n\n\n\nFor manual fan speed settings choose 1\nFor automatic fixed fan speed settings choose 2\nFor automatic temperature control choose 3')
-			print("Room temperature is: ", end = '')
-			print(read_temperature(device_file))
-			print("Room state: ", end ='')
-			print(read_switch_state(SW_PEOPLE))
-			print("Window state: ", end ='')
-			print(read_switch_state(SW_WINDOW))
-			print("Fan speed is: ", end='')
-			print(fan_speed)
+			print("Room temperature is: {}".format(read_temperature(device_file)))
+			if(read_switch_state(SW_PEOPLE) == 1):
+				print("Room is not empty")
+			else:
+				print("Room is empty")
+			if(read_switch_state(SW_WINDOW) == 1):
+				print("Window is closed")
+			else:
+				print("Window is open")
+			print("Fan speed is: {}".format(fan_speed))
 			
 			if read_temperature(device_file) > 30:
 				print("WARNING!!! TEMPERATURE IS HIGHER THAN 30C")
